@@ -1,0 +1,104 @@
+plugins {
+	id 'org.springframework.boot' version '2.5.5'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+	jaxb
+}
+
+repositories {
+	mavenCentral()
+}
+/*	dependencies	{
+		implementation 'org.springframework.boot:spring-boot-starter-web'
+		implementation 'org.springframework.boot:spring-boot-starter-web-services'
+		implementation 'wsdl4j:wsdl4j'
+		implementation "com.sun.xml.bind:jaxb-core:2.3.0.1"
+		implementation "javax.xml.bind:jaxb-api:2.3.1"
+		implementation "com.sun.xml.bind:jaxb-impl:2.3.1"
+		implementation "org.javassist:javassist:3.25.0-GA"
+		implementation group: 'org.springframework', name: 'spring-oxm', version: '3.0.0.RELEASE'
+		implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
+		implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+
+	}
+*/
+task genJaxb {
+	ext.classesDir = "${buildDir}/src/main/resources/wsdl"
+	ext.sourcesDir = "${projectDir}/src/main/java"
+	ext.schema = "http://localhost:8080/soapWS/users.wsdl"
+
+		outputs.dir classesDir
+
+		doLast() {
+			project.ant {
+				taskdef name: "xjc", classname: "com.sun.tools.xjc.XJCTask",
+						classpath: configurations.jaxb.asPath
+				mkdir(dir: sourcesDir)
+				mkdir(dir: classesDir)
+
+				xjc(destdir: sourcesDir, schema: schema,
+						package: "com.example.RestsoapClient.user") {
+					arg(value: "-wsdl")
+					produces(dir: sourcesDir, includes: "**/*.java")
+				}
+
+				copy(todir: classesDir) {
+					fileset(dir: sourcesDir, erroronmissingdir: false) {
+						exclude(name: "**/*.java")
+					}
+				}
+			}
+		}
+	}
+
+compileJava.dependsOn genJaxb
+dependencies {
+
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-web-services'
+	implementation 'wsdl4j:wsdl4j'
+	implementation "com.sun.xml.bind:jaxb-core:2.3.0.1"
+	implementation "javax.xml.bind:jaxb-api:2.3.1"
+	implementation "com.sun.xml.bind:jaxb-impl:2.3.1"
+	implementation "org.javassist:javassist:3.25.0-GA"
+	implementation group: 'org.springframework', name: 'spring-oxm', version: '3.0.0.RELEASE'
+	implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
+
+	implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+
+
+
+	implementation ('org.springframework.boot:spring-boot-starter-web-services') {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+	}
+	implementation 'org.springframework.ws:spring-ws-core'
+	implementation group: 'org.springframework', name: 'spring-context', version: '5.3.9'
+	// For Java 11:
+	implementation 'org.glassfish.jaxb:jaxb-runtime'
+	implementation(files(genJaxb.classesDir).builtBy(genJaxb))
+
+
+	jaxb (
+			'com.sun.xml.bind:jaxb-xjc:2.2.7',
+			'com.sun.xml.bind:jaxb-impl:2.2.7'
+	)
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+test {
+	useJUnitPlatform()
+}
+
+
+bootJar {
+	baseName = 'gs-consuming-web-service'
+	version =  '0.0.1'
+}
